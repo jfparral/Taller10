@@ -15,10 +15,7 @@
 #define HOST_NAME_MAX 256 
 #endif
 
-/*Prototipos de función*/
-void recibirArchivo(int SocketFD, FILE *file);
-void enviarConfirmacion(int SocketFD);
-void enviarMD5SUM(int SocketFD);
+
 
 
 int main(int argc, char *argv[]){
@@ -28,6 +25,7 @@ int main(int argc, char *argv[]){
 	char *host;
 	int SocketServerFD;
 	int SocketClientFD;
+	char mensaje[80];
 	int clientLen;
 	int puerto;
 	
@@ -91,67 +89,27 @@ int main(int argc, char *argv[]){
 		clSockAddr.sin_port = htons(puerto);
 		printf("Cliente conectado: %s\n",inet_ntoa(clSockAddr.sin_addr));
 
-		/*Se recibe la ruta del cliente*/
+		/*Se recibe la ruta a buscar del cliente*/
         char rutacliente[BUFFSIZE]={0};
-        char ruta[10000000]={0};
-        char imagen[10000000]={0};
-        while((recibido = recv(SocketFD, rutacliente, BUFFSIZE, 0)) == 0){
-		    fwrite(ruta,sizeof(char),1,file);
-	    }//Termina la recepción de la ruta
-        int fd,fd1;
-        fd=open(ruta,O_RDONLY);
-        while(!feof(fd1)){
-            fread(imagen,sizeof(char),10000000,fd);
-            if(send(SocketFD,imagen,10000000,0) == ERROR)
+        char ruta[BUFFSIZE]={0};
+        char imagen[BUFFSIZE]={0};	
+        read(SocketClientFD,rutacliente,sizeof(rutacliente));
+		//Termina la recepción de la ruta
+        archivo=fopen(ruta,"rb");
+        while(!feof(archivo)){
+            fread(imagen,sizeof(char),BUFFSIZE,archivo);
+            if(send(SocketClientFD,imagen,BUFFSIZE,0) == ERROR)
                 perror("Error al enviar el arvhivo:");
 	    }
-		recibirArchivo(SocketClientFD,archivo);
 		
-
-	}//End infinity while
+		read(SocketClientFD,mensaje,sizeof(mensaje));
+		printf("\nConfirmación recibida:\n%s\n",mensaje);
+		
+		read(SocketClientFD,mensaje,sizeof(mensaje));
+		}//End infinity while
 
  	close(SocketClientFD);
 	close(SocketServerFD);
 	return 0;
 }//End main program
 
-void recibirArchivo(int SocketFD, FILE *file){
-	char buffer[BUFFSIZE];
-	int recibido = -1;
-
-	/*Se abre el archivo para escritura*/
-	file = fopen("archivoRecibido","wb");
-	enviarConfirmacion(SocketFD);
-	enviarMD5SUM(SocketFD);
-	while((recibido = recv(SocketFD, buffer, BUFFSIZE, 0)) > 0){
-		//printf("%s",buffer);
-		fwrite(buffer,sizeof(char),1,file);
-	}//Termina la recepción del archivo
-
-	fclose(file);
-	
-
-}//End recibirArchivo procedure
-
-void enviarConfirmacion(int SocketFD){
-	char mensaje[80] = "Paquete Recibido";
-	printf("\nConfirmación enviada\n");
-	if(write(SocketFD,mensaje,sizeof(mensaje)) == ERROR)
-			perror("Error al enviar la confirmación:");
-
-	
-}//End enviarConfirmacion
-
-void enviarMD5SUM(int SocketFD){
-	FILE *tmp;//Apuntador al archivo temporal que guarda el MD5SUM del archivo.
-	char *fileName = "verificacion";
-	char md5sum[80];
-	system("md5sum archivoRecibido >> verificacion");
-	
-	tmp = fopen(fileName,"r");
-	fscanf(tmp,"%s",md5sum);	
-	//printf("\nMD5SUM:%s\n",md5sum);	
-	write(SocketFD,md5sum,sizeof(md5sum));
-	fclose(tmp);
-
-}//End enviarMD5DUM
