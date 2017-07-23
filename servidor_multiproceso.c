@@ -9,7 +9,7 @@
 
 /*Definición de constantes*/
 #define BUFFSIZE 1
-#define ERROR		-1
+#define ERROR -1
 
 #ifndef HOST_NAME_MAX 
 #define HOST_NAME_MAX 256 
