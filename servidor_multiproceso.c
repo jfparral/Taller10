@@ -109,11 +109,10 @@ int main(int argc, char *argv[]){
 
 		/*Se recibe la ruta a buscar del cliente*/
         char rutacliente[BUFFSIZE]={0};
-        char ruta[BUFFSIZE]={0};
         char imagen[BUFFSIZE]={0};	
         read(SocketClientFD,rutacliente,sizeof(rutacliente));
 		//Termina la recepción de la ruta
-        archivo=fopen(ruta,"rb");
+        archivo=fopen(rutacliente,"rb");
         while(!feof(archivo)){
             fread(imagen,sizeof(char),BUFFSIZE,archivo);
             if(send(SocketClientFD,imagen,BUFFSIZE,0) == ERROR)
@@ -121,9 +120,8 @@ int main(int argc, char *argv[]){
 	    }
 		
 		read(SocketClientFD,mensaje,sizeof(mensaje));
-		printf("\nConfirmación recibida:\n%s\n",mensaje);
+		printf("\nConfirmación enviada:\n%s\n",mensaje);
 		
-		read(SocketClientFD,mensaje,sizeof(mensaje));
 	}//End infinity while
 
  	close(SocketClientFD);

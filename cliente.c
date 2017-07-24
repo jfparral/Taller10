@@ -11,12 +11,16 @@
 #define	ERROR	-1
 //#define	PUERTO	4555
 
+/*Prototipos de función*/
+void recibirArchivo(int SocketFD, FILE *file, char name);
+void enviarConfirmacion(int SocketFD);
+void enviarMD5SUM(int SocketFD);
+
 int main(int argc, char *argv[]){
 	struct sockaddr_in stSockAddr;
 	int Res;
 	int SocketFD;
 	char buffer[BUFFSIZE];
-	char mensaje[80];
 	int puerto;
 	FILE *archivo;
 
@@ -28,10 +32,6 @@ int main(int argc, char *argv[]){
 	if(argc != 5){
 		printf( "por favor especificar un numero de puerto\n");
 	}
-
-
-	/*Se abre el archivo a enviar*/
-	archivo = fopen(argv[3],"rb");
 
 	/*Se crea el socket*/
 	SocketFD = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -77,21 +77,34 @@ int main(int argc, char *argv[]){
 	if(send(SocketFD,ruta,BUFFSIZE,0) == ERROR)
 			perror("Error al enviar el ruta:");
 
-	/*Se envia el archivo*/
-	while(!feof(archivo)){
-		fread(buffer,sizeof(char),BUFFSIZE,archivo);
-		if(send(SocketFD,buffer,BUFFSIZE,0) == ERROR)
-			perror("Error al enviar el arvhivo:");
-	}
-	
-	read(SocketFD,mensaje,sizeof(mensaje));
-	printf("\nConfirmación recibida:\n%s\n",mensaje);
-	
-	read(SocketFD,mensaje,sizeof(mensaje));
-	//printf("\nMD5SUM:\n%s\n",mensaje);
+	// se recibe el archivo
+	recibirArchivo(SocketFD,archivo,argv[4]);
 	
 	fclose(archivo);
 	close(SocketFD);
 
 	return 0;
 }//End main
+
+void recibirArchivo(int SocketFD, FILE *file,char name){
+	char buffer[BUFFSIZE];
+	int recibido = -1;
+
+	/*Se abre el archivo para escritura*/
+	file = fopen(name,"wb");
+	while((recibido = recv(SocketFD, buffer, BUFFSIZE, 0)) > 0){
+		//printf("%s",buffer);
+		fwrite(buffer,sizeof(char),1,file);
+	}//Termina la recepción del archivo
+	enviarConfirmacion(SocketFD);
+	fclose(file);
+	
+
+}//End recibirArchivo procedure
+
+void enviarConfirmacion(int SocketFD){
+	char mensaje[80] = "Paquete Recibido";
+	printf("\nConfirmación enviada\n");
+	if(write(SocketFD,mensaje,sizeof(mensaje)) == ERROR)
+			perror("Error al enviar la confirmación:");
+}//End enviarConfirmacion
