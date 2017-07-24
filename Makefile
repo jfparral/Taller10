@@ -1,10 +1,10 @@
-all: Servidor Cliente
+all: Servidor_Multiproceso Cliente
 
-Servidor: Servidor.c 
-	gcc -Wall -g $^ -o $@
+Servidor_Multiproceso: servidor_multiproceso.c 
+	gcc -Wall -g $^ -o Servidor_Multiproceso
 
-Cliente: Cliente.c 
-	gcc -Wall $^ -o filecliente/$@
+Cliente: cliente.c 
+	gcc -Wall $^ -o Cliente
 
 clean:
-	rm -rf Cliente Servidor verificacion archivoRecibido
+	rm -rf Cliente Servidor_Multiproceso verificacion archivoRecibido
