@@ -12,7 +12,7 @@
 //#define	PUERTO	4555
 
 /*Prototipos de función*/
-void recibirArchivo(int SocketFD, FILE *file, char name);
+void recibirArchivo(int SocketFD, FILE *file, char *name);
 void enviarConfirmacion(int SocketFD);
 void enviarMD5SUM(int SocketFD);
 
@@ -20,7 +20,6 @@ int main(int argc, char *argv[]){
 	struct sockaddr_in stSockAddr;
 	int Res;
 	int SocketFD;
-	char buffer[BUFFSIZE];
 	int puerto;
 	FILE *archivo;
 
@@ -35,12 +34,6 @@ int main(int argc, char *argv[]){
 
 	/*Se crea el socket*/
 	SocketFD = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-	/*Se verifica la integridad del archivo*/
-	if(!archivo){
-		perror("Error al abrir el archivo:");
-		exit(EXIT_FAILURE);
-	}
     
 	/*Se verifica la integridad del socket*/
 	if (SocketFD == ERROR){
@@ -66,27 +59,27 @@ int main(int argc, char *argv[]){
 	}
 
 	if (connect(SocketFD, (struct sockaddr *)&stSockAddr, sizeof stSockAddr) == ERROR){
-		perror("Error a la hora de conectarse con el cliente");
+		perror("Error a la hora de conectarse con el servidor");
 		close(SocketFD);
 		exit(EXIT_FAILURE);
 	}
 
 	printf("Se ha conectado con el servidor:%s\n",(char *)inet_ntoa(stSockAddr.sin_addr));
-
-	char ruta[BUFFSIZE]={0};
-	if(send(SocketFD,ruta,BUFFSIZE,0) == ERROR)
-			perror("Error al enviar el ruta:");
-
+	printf("%s\n",argv[3]);
+	if(write(SocketFD,argv[3],sizeof(argv[3])) == ERROR)
+	{
+			perror("Error al enviar la confirmación:");
+	}
+	sleep(5);
 	// se recibe el archivo
 	recibirArchivo(SocketFD,archivo,argv[4]);
-	
-	fclose(archivo);
+	enviarConfirmacion(SocketFD);
 	close(SocketFD);
 
 	return 0;
 }//End main
 
-void recibirArchivo(int SocketFD, FILE *file,char name){
+void recibirArchivo(int SocketFD, FILE *file,char *name){
 	char buffer[BUFFSIZE];
 	int recibido = -1;
 
@@ -96,10 +89,7 @@ void recibirArchivo(int SocketFD, FILE *file,char name){
 		//printf("%s",buffer);
 		fwrite(buffer,sizeof(char),1,file);
 	}//Termina la recepción del archivo
-	enviarConfirmacion(SocketFD);
 	fclose(file);
-	
-
 }//End recibirArchivo procedure
 
 void enviarConfirmacion(int SocketFD){

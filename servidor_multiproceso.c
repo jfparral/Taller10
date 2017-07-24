@@ -79,15 +79,16 @@ int main(int argc, char *argv[]){
 	}//End if-listen
 
 	while (comprobador){
+		
 		//Creamos los SUBPROCESOS
 		if (( pid = fork()) < 0) {
-			perror(" fork error");
-		} else if (pid == 0) { /* child */
-			sigfillset(&senales);
-			sigdelset(&senales,SIGTSTP);
-			sigprocmask(SIG_UNBLOCK,&senales,&old);
+			perror("fork error");
+		} else if (pid == 0) { // child 
+			sigemptyset(&senales);
+			sigaddset(&senales,SIGTSTP);
+			sigprocmask(SIG_BLOCK,&senales,&old);
 		} else {
-				//Atrapamos la señal
+				//Atrapamos la señal en el padre
 				signal(SIGTSTP,catch);
 		} 
 
@@ -108,19 +109,25 @@ int main(int argc, char *argv[]){
 		printf("Cliente conectado: %s\n",inet_ntoa(clSockAddr.sin_addr));
 
 		/*Se recibe la ruta a buscar del cliente*/
-        char rutacliente[BUFFSIZE]={0};
-        char imagen[BUFFSIZE]={0};	
-        read(SocketClientFD,rutacliente,sizeof(rutacliente));
-		//Termina la recepción de la ruta
-        archivo=fopen(rutacliente,"rb");
+        //char rutacliente[BUFFSIZE];
+        char imagen[BUFFSIZE];
+		char buffer[1025667];
+		memset(&buffer, 0, sizeof(buffer));
+
+		if(recv(SocketClientFD, buffer,sizeof(buffer),0)== ERROR){
+			printf("ERROR AL LEER LA RUTA");
+		}//Termina la recepción de la ruta
+		
+		printf("%s\n",buffer);
+        archivo=fopen(buffer,"rb");
         while(!feof(archivo)){
             fread(imagen,sizeof(char),BUFFSIZE,archivo);
             if(send(SocketClientFD,imagen,BUFFSIZE,0) == ERROR)
                 perror("Error al enviar el arvhivo:");
-	    }
+	    }//Finaliza el envio del archivo
 		
 		read(SocketClientFD,mensaje,sizeof(mensaje));
-		printf("\nConfirmación enviada:\n%s\n",mensaje);
+		printf("\nConfirmación recibida:\n%s\n",mensaje);
 		
 	}//End infinity while
 

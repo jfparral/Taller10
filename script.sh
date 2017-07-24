@@ -1,9 +1,17 @@
 #! /bin/bash
 name="Creando instancias de cliente"
 echo $name
-for i in {1..10000};do
-	for j in {0..49};do
-		echo "Cliente  $i"
-		./Cliente 127.0.0.1 14145 aleatorios/archivo$j archivo$j
-	done
+cont=0
+for i in {0..1};do
+        if [ $cont -lt 50 ]; then
+        {
+            echo "Cliente  $i"
+            ./Cliente 127.0.0.1 14146 aleatorios/archivo$cont archivo$cont
+            cont=cont+1
+        }
+	    else
+        {
+            cont=0
+        }
+        fi
 done
